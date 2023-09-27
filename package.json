@@ -1,0 +1,19 @@
+{
+  "name": "tasks",
+  "version": "1.0.0",
+  "description": "API of tasks",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file=.env --watch server.js"
+  },
+  "keywords": [
+    "tasks",
+    "api"
+  ],
+  "author": "Rémi RODRIGUES",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
