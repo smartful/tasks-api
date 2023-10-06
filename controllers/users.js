@@ -1,4 +1,5 @@
 import { response } from 'express';
+import User from '../models/userModel.js';
 
 export const register = (request, response) => {
   const { name, email, password } = request.body;
