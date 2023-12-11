@@ -5,7 +5,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node --env-file=.env --watch server.js"
+    "start": "node --env-file=.env server.js",
+    "server": "nodemon --env-file=.env server.js"
   },
   "keywords": [
     "tasks",
@@ -16,5 +17,8 @@
   "dependencies": {
     "express": "^4.18.2",
     "mongoose": "^7.5.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   }
 }
