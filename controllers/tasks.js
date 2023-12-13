@@ -1,21 +1,11 @@
-const tasks = [
-  {
-    id: 1,
-    name: 'Amuser Nounours',
-    description: "Amener Nounours dans un parc d'attraction.",
-  },
-  {
-    id: 2,
-    name: 'Faire la fête avec Nounours',
-    description: "Faire une grosse fête avec pleins d'alcool est pleins de super meufs.",
-  },
-  {
-    id: 3,
-    name: 'Lire le journal',
-    description: "Lire l'actualité économique et internationales.",
-  },
-];
+import Task from '../models/taskModel.js';
 
-export const getTasks = (request, response) => {
-  response.json(tasks);
+export const getTasks = async (request, response) => {
+  try {
+    const tasks = await Task.find({ user: request?.user?.id }).sort({ date: -1 });
+    return response.json(tasks);
+  } catch (error) {
+    console.error(`Error : ${error.message}`);
+    return response.status(500).json({ message: 'Server Error' });
+  }
 };
