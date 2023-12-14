@@ -53,3 +53,24 @@ export const updateTask = async (request, response) => {
     return response.status(500).json({ message: 'Server Error' });
   }
 };
+
+export const deleteTask = async (request, response) => {
+  try {
+    let task = await Task.findById(request.params.id);
+
+    if (!task) {
+      return response.status(404).json({ message: 'Task not found' });
+    }
+
+    // Make sure user own the task
+    if (task.user.toString() !== request.user.id) {
+      return response.status(401).json({ message: 'Not Authorized' });
+    }
+
+    await Task.findByIdAndRemove(request.params.id);
+    return response.json({ message: 'Contact removed' });
+  } catch (error) {
+    console.error(`Error : ${error.message}`);
+    return response.status(500).json({ message: 'Server Error' });
+  }
+};
