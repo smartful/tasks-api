@@ -68,3 +68,13 @@ export const login = async (request, response) => {
     return response.status(500).json({ message: 'Server Error' });
   }
 };
+
+export const getProfile = async (request, response) => {
+  try {
+    const user = await User.findById(request.user.id).select('-password');
+    return response.json(user);
+  } catch (error) {
+    console.error(`Error : ${error.message}`);
+    return response.status(500).json({ message: 'Server Error' });
+  }
+};
