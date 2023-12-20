@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import connectDB from './config/db.js';
 import tasksRoutes from './routes/tasks.js';
 import usersRoutes from './routes/users.js';
@@ -7,6 +8,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 connectDB();
 
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
