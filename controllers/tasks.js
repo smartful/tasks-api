@@ -1,4 +1,5 @@
 import { request, response } from 'express';
+import sanitizeHtml from 'sanitize-html';
 import Task from '../models/taskModel.js';
 
 export const getTasks = async (request, response) => {
@@ -14,9 +15,11 @@ export const getTasks = async (request, response) => {
 export const createTask = async (request, response) => {
   const { name } = request.body;
 
+  const sanitizedName = sanitizeHtml(name);
+
   try {
     const newTask = new Task({
-      name,
+      name: sanitizedName,
       done: false,
       user: request?.user.id,
     });
@@ -31,7 +34,7 @@ export const createTask = async (request, response) => {
 export const updateTask = async (request, response) => {
   const { name, done } = request.body;
   const taskField = {};
-  if (name) taskField.name = name;
+  if (name) taskField.name = sanitizeHtml(name);
   if (done) taskField.done = done;
 
   try {

@@ -1,20 +1,24 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import sanitizeHtml from 'sanitize-html';
 import User from '../models/userModel.js';
 
 export const register = async (request, response) => {
   const { name, email, password } = request.body;
 
+  const sanitizedName = sanitizeHtml(name);
+  const sanitizedEmail = sanitizeHtml(email);
+
   try {
     // Check if user already exist
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ sanitizedEmail });
     if (user) {
       return response.status(400).json({ message: 'User already exist' });
     }
 
     user = new User({
-      name,
-      email,
+      name: sanitizedName,
+      email: sanitizedEmail,
       password,
     });
     const salt = await bcrypt.genSalt(10);
@@ -72,7 +76,12 @@ export const login = async (request, response) => {
 export const getProfile = async (request, response) => {
   try {
     const user = await User.findById(request.user.id).select('-password');
-    return response.json(user);
+    const sanitizedUser = {
+      ...user._doc,
+      name: sanitizeHtml(user.name),
+      email: sanitizeHtml(user.email),
+    };
+    return response.json(sanitizedUser);
   } catch (error) {
     console.error(`Error : ${error.message}`);
     return response.status(500).json({ message: 'Server Error' });
