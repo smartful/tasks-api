@@ -33,9 +33,12 @@ export const createTask = async (request, response) => {
 
 export const updateTask = async (request, response) => {
   const { name, done } = request.body;
+
   const taskField = {};
   if (name) taskField.name = sanitizeHtml(name);
-  if (done) taskField.done = done;
+  if ('done' in request.body) {
+    taskField.done = done;
+  }
 
   try {
     let task = await Task.findById(request.params.id);
