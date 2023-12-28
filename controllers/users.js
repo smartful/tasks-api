@@ -49,13 +49,13 @@ export const login = async (request, response) => {
     // Check if user exist
     let user = await User.findOne({ email });
     if (!user) {
-      return response.status(400).json({ message: 'Invalid credentials' });
+      return response.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return response.status(400).json({ message: 'Invalid credentials' });
+      return response.status(401).json({ message: 'Invalid credentials' });
     }
 
     const payload = {
