@@ -3,6 +3,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import tasksRoutes from './routes/tasks.js';
 import usersRoutes from './routes/users.js';
+import subscribtionRoutes from './routes/subscribtions.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/subscribe', subscribtionRoutes);
 app.get('/', (request, response) => {
   response.json({ message: 'Salut les nazes ! Bienvenue sur Task !!!' });
 });
