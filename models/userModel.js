@@ -15,6 +15,12 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    stripeCustomerId: {
+      type: String,
+    },
+    stripeProductId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
