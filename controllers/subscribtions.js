@@ -91,10 +91,6 @@ export const createPortalSession = async (request, response) => {
   // const session_id = 'cs_test_a1H51P2Mxjx825QRYc2s925UUNl0WOWRRUMQFRmbzJ3m0QpuwAOzGI6l2l';
   // const checkoutSession = await stripe.checkout.sessions.retrieve(session_id);
 
-  // This is the url to which the customer will be redirected when they are done
-  // managing their billing with the portal.
-  const returnUrl = YOUR_DOMAIN;
-
   // const user = await User.findById(request.user.id).select('-password');
 
   // if (!user) {
@@ -105,8 +101,8 @@ export const createPortalSession = async (request, response) => {
   console.log('customer : ', customer);
 
   const portalSession = await stripe.billingPortal.sessions.create({
-    customer: customer,
-    return_url: returnUrl,
+    customer: customer?.id,
+    return_url: `${YOUR_DOMAIN}/portal`,
   });
 
   console.log('portalSession : ', portalSession);
