@@ -111,6 +111,7 @@ export const createPortalSession = async (request, response) => {
 };
 
 export const subscribtionWebhook = async (request, response) => {
+  console.log('--- WEBHOOK ---');
   let data;
   let eventType;
   // Check if webhook signing is configured.
