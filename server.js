@@ -23,7 +23,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/subscribe', subscribtionRoutes);
 
 // Stripe Webhook
-app.post('/webhooks', subscribtionWebhook);
+app.post('/webhooks', express.raw({ type: 'application/json' }), subscribtionWebhook);
 
 app.get('/', (request, response) => {
   response.json({ message: 'Salut les nazes ! Bienvenue sur Task !!!' });

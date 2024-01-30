@@ -115,7 +115,8 @@ export const subscribtionWebhook = async (request, response) => {
   let data;
   let eventType;
   // Check if webhook signing is configured.
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = false;
   if (webhookSecret) {
     // Retrieve the event by verifying the signature using the raw body and secret.
     let event;
@@ -137,11 +138,17 @@ export const subscribtionWebhook = async (request, response) => {
     eventType = request.body.type;
   }
 
+  console.log('WEBHOOK EVENT data : ', data);
+  console.log('WEBHOOK EVENT type : ', eventType);
+
   switch (eventType) {
     case 'checkout.session.completed':
       // Payment is successful and the subscription is created.
       // You should provision the subscription and save the customer ID to your database.
       console.log('WEBHOOK : checkout.session.completed');
+      break;
+    case 'payment_intent.succeeded':
+      console.log('WEBHOOK : payment_intent.succeeded');
       break;
     case 'invoice.paid':
       // Continue to provision the subscription as payments continue to be made.
@@ -154,6 +161,9 @@ export const subscribtionWebhook = async (request, response) => {
       // The subscription becomes past_due. Notify your customer and send them to the
       // customer portal to update their payment information.
       console.log('WEBHOOK : invoice.payment_failed');
+      break;
+    case 'customer.subscription.updated':
+      console.log('WEBHOOK : customer.subscription.updated');
       break;
     default:
     // Unhandled event type
