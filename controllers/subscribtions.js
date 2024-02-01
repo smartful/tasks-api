@@ -86,23 +86,14 @@ export const createCheckoutSession = async (request, response) => {
 };
 
 export const createPortalSession = async (request, response) => {
-  // For demonstration purposes, we're using the Checkout session to retrieve the customer ID.
-  // Typically this is stored alongside the authenticated user in your database.
-  // const { session_id } = request.body;
-  // const session_id = 'cs_test_a1H51P2Mxjx825QRYc2s925UUNl0WOWRRUMQFRmbzJ3m0QpuwAOzGI6l2l';
-  // const checkoutSession = await stripe.checkout.sessions.retrieve(session_id);
+  const subscription = await Subscription.findOne({ userId: request.user.id });
 
-  // const user = await User.findById(request.user.id).select('-password');
-
-  // if (!user) {
-  //   return response.status(400).json({ message: 'User not found' });
-  // }
-  // customer = await stripe.customers.retrieve(user?.stripeCustomerId);
-  const customer = await stripe.customers.retrieve('cus_PRYYVD0ifln5CE');
-  console.log('customer : ', customer);
+  if (!subscription || !subscription.stripeCustomerId) {
+    return response.status(400).json({ message: 'Stripe customer ID not found for the user' });
+  }
 
   const portalSession = await stripe.billingPortal.sessions.create({
-    customer: customer?.id,
+    customer: subscription.stripeCustomerId,
     return_url: `${YOUR_DOMAIN}/portal`,
   });
 
