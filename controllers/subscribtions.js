@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import Subscription from '../models/subcribtionModel.js';
 import User from '../models/userModel.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -115,58 +116,89 @@ export const subscribtionWebhook = async (request, response) => {
   let data;
   let eventType;
   // Check if webhook signing is configured.
-  // const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  const webhookSecret = false;
-  if (webhookSecret) {
-    // Retrieve the event by verifying the signature using the raw body and secret.
-    let event;
-    let signature = request.headers['stripe-signature'];
-
-    try {
-      event = stripe.webhooks.constructEvent(request.body, signature, webhookSecret);
-    } catch (error) {
-      console.log(`⚠️  Webhook signature verification failed.`);
-      return response.status(400).json({ message: error.message });
-    }
-    // Extract the object from the event.
-    data = event.data;
-    eventType = event.type;
-  } else {
-    // Webhook signing is recommended, but if the secret is not configured in `config.js`,
-    // retrieve the event data directly from the request body.
-    data = request.body.data;
-    eventType = request.body.type;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('The STRIPE_WEBHOOK_SECRET environment variable is not set. Webhook handling is disabled.');
+    return response.status(500).json({ message: 'Webhook handling is disabled due to missing configuration.' });
   }
+
+  let event;
+  let signature = request.headers['stripe-signature'];
+
+  try {
+    event = stripe.webhooks.constructEvent(request.body, signature, webhookSecret);
+  } catch (error) {
+    console.log('⚠️  Webhook signature verification failed : ', error.message);
+    return response.status(400).json({ message: 'Webhook signature verification failed.' });
+  }
+  // Extract the object from the event.
+  data = event.data;
+  eventType = event.type;
 
   console.log('WEBHOOK EVENT data : ', data);
   console.log('WEBHOOK EVENT type : ', eventType);
 
   switch (eventType) {
     case 'checkout.session.completed':
-      // Payment is successful and the subscription is created.
-      // You should provision the subscription and save the customer ID to your database.
       console.log('WEBHOOK : checkout.session.completed');
+      if (dataObject.mode === 'subscription') {
+        const customerEmail = dataObject.customer_details.email; // Récupère l'email du client
+        const subscriptionId = dataObject.subscription; // Récupère l'ID de l'abonnement Stripe
+
+        // Trouve l'utilisateur correspondant dans ta base de données
+        const user = await User.findOne({ email: customerEmail });
+        if (!user) {
+          console.error('User not found with email:', customerEmail);
+          return response.status(404).send('User not found');
+        }
+
+        // Optionnellement, récupère les détails de l'abonnement Stripe pour plus d'informations
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+        // Met à jour ou crée l'enregistrement d'abonnement dans ta base de données
+        let userSubscription = await Subscription.findOne({ userId: user._id });
+        if (userSubscription) {
+          // Met à jour l'abonnement existant
+          userSubscription.stripeSubscriptionId = subscriptionId;
+          userSubscription.subscriptionStatus = subscription.status;
+          userSubscription.currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+          // ...autres mises à jour selon les champs de ton schéma
+        } else {
+          // Crée un nouvel enregistrement d'abonnement
+          userSubscription = new Subscription({
+            userId: user._id,
+            stripeSubscriptionId: subscriptionId,
+            stripeCustomerId: dataObject.customer,
+            planId: subscription.items.data[0].plan.id,
+            subscriptionStatus: subscription.status,
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          });
+        }
+        await userSubscription.save();
+      }
       break;
-    case 'payment_intent.succeeded':
-      console.log('WEBHOOK : payment_intent.succeeded');
-      break;
-    case 'invoice.paid':
-      // Continue to provision the subscription as payments continue to be made.
-      // Store the status in your database and check when a user accesses your service.
-      // This approach helps you avoid hitting rate limits.
-      console.log('WEBHOOK : invoice.paid');
-      break;
-    case 'invoice.payment_failed':
-      // The payment failed or the customer does not have a valid payment method.
-      // The subscription becomes past_due. Notify your customer and send them to the
-      // customer portal to update their payment information.
-      console.log('WEBHOOK : invoice.payment_failed');
-      break;
+
     case 'customer.subscription.updated':
       console.log('WEBHOOK : customer.subscription.updated');
+      // Met à jour l'enregistrement d'abonnement existant
+      await Subscription.findOneAndUpdate(
+        { stripeSubscriptionId: dataObject.id },
+        {
+          subscriptionStatus: dataObject.status,
+          currentPeriodStart: new Date(dataObject.current_period_start * 1000),
+          currentPeriodEnd: new Date(dataObject.current_period_end * 1000),
+        }
+      );
+      break;
+
+    case 'customer.subscription.deleted':
+      console.log('WEBHOOK : customer.subscription.deleted');
+      // Marque l'abonnement comme annulé ou supprime l'enregistrement
+      await Subscription.findOneAndUpdate({ stripeSubscriptionId: dataObject.id }, { subscriptionStatus: 'canceled' });
       break;
     default:
-    // Unhandled event type
+      console.log(`Unhandled event type : ${eventType}`);
   }
 
   response.status(200).json({ message: eventType });
