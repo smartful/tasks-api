@@ -10,6 +10,9 @@ const app = express();
 const port = process.env.PORT || 5000;
 connectDB();
 
+console.log('process.env.NODE_ENV : ', process.env.NODE_ENV);
+console.log('process.env.CLIENT_URL : ', process.env.CLIENT_URL);
+
 app.use(
   cors({
     origin: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : process.env.CLIENT_URL,
