@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import sanitizeHtml from 'sanitize-html';
 import User from '../models/userModel.js';
+import Subscription from '../models/subcribtionModel.js';
 
 export const register = async (request, response) => {
   const { name, email, password } = request.body;
@@ -76,12 +77,42 @@ export const login = async (request, response) => {
 export const getProfile = async (request, response) => {
   try {
     const user = await User.findById(request.user.id).select('-password');
+    if (!user) {
+      return response.status(404).json({ message: 'User not found' });
+    }
+
     const sanitizedUser = {
       ...user._doc,
       name: sanitizeHtml(user.name),
       email: sanitizeHtml(user.email),
     };
-    return response.json(sanitizedUser);
+
+    const subscription = await Subscription.findOne({ userId: user.id });
+
+    if (!subscription) {
+      const data = {
+        ...sanitizedUser,
+        subscriptionStatus: '',
+        stripeCustomerId: '',
+        planId: '',
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+      };
+
+      return response.json(data);
+    }
+
+    console.log('subscription : ', subscription);
+    const data = {
+      ...sanitizedUser,
+      subscriptionStatus: subscription.subscriptionStatus,
+      stripeCustomerId: subscription.stripeCustomerId,
+      planId: subscription.planId,
+      currentPeriodStart: subscription.currentPeriodStart,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+    };
+
+    return response.json(data);
   } catch (error) {
     console.error(`Error : ${error.message}`);
     return response.status(500).json({ message: 'Server Error' });

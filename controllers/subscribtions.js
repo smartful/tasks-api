@@ -69,7 +69,6 @@ export const createCheckoutSession = async (request, response) => {
     line_items: [
       {
         price: process.env.PRICE_API,
-        // For metered billing, do not pass quantity
         quantity: 1,
       },
     ],
@@ -80,13 +79,13 @@ export const createCheckoutSession = async (request, response) => {
       trial_period_days: 7,
     },
   });
-  console.log('session : ', session);
 
   response.json({ url: session?.url });
 };
 
 export const createPortalSession = async (request, response) => {
   const subscription = await Subscription.findOne({ userId: request.user.id });
+  console.log('subscription : ', subscription);
 
   if (!subscription || !subscription.stripeCustomerId) {
     return response.status(400).json({ message: 'Stripe customer ID not found for the user' });
