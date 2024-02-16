@@ -80,6 +80,8 @@ export const createCheckoutSession = async (request, response) => {
     },
   });
 
+  console.log('Checkout url : ', session?.url);
+
   response.json({ url: session?.url });
 };
 
